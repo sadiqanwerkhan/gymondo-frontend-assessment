@@ -13,14 +13,12 @@ const allWorkouts: Workout[] = require("./workouts.json");
 
 const app = express();
 app.use(cors());
-app.use(express.json()); // ready for future POST/PUT support
+app.use(express.json());
 
-// Health check route
 app.get("/", (_req: Request, res: Response) => {
-  res.send("✅ Gymondo Backend API is running");
+  res.send("The backend API is running here..");
 });
 
-// GET workouts with filters + pagination
 app.get("/workouts", (req: Request, res: Response) => {
   const { page = "1", category, startDate } = req.query;
   const pageNumber = parseInt(page as string) || 1;
@@ -56,7 +54,6 @@ app.get("/workouts", (req: Request, res: Response) => {
   });
 });
 
-// GET workout by ID
 app.get(
   "/workouts/:id",
   (req: Request<{ id: string }>, res: Response): void => {
@@ -69,11 +66,10 @@ app.get(
   }
 );
 
-// Optional 404 fallback
 app.use((_req, res) => {
   res.status(404).json({ error: "Route not found" });
 });
 
 app.listen(3001, () => {
-  console.log("✅ Backend running at http://localhost:3001");
+  console.log("Backend running at http://localhost:3001");
 });
