@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import api from "../api/axios";
 import { Link, useSearchParams } from "react-router-dom";
 import type { Workout } from "../types/workout";
+import { getNext12Months } from "../utils/date";
 
 const WorkoutList = () => {
   const [totalPages, setTotalPages] = useState(1);
@@ -16,6 +17,23 @@ const WorkoutList = () => {
   const startDate = searchParams.get("startDate") || "";
 
   const allCategories = ["c1", "c2", "c3", "c4", "c5", "c6", "c7"];
+  const months = getNext12Months();
+
+  const initialized = useRef(false);
+  useEffect(() => {
+    if (!startDate && !initialized.current) {
+      const now = new Date();
+      const defaultMonth = `${now.getFullYear()}-${String(
+        now.getMonth() + 1
+      ).padStart(2, "0")}`;
+      setSearchParams({
+        page: "1",
+        category: selectedCategories.join(","),
+        startDate: defaultMonth,
+      });
+      initialized.current = true;
+    }
+  }, [startDate, selectedCategories, setSearchParams]);
 
   useEffect(() => {
     setLoading(true);
@@ -79,13 +97,11 @@ const WorkoutList = () => {
                       ? selectedCategories.filter((c) => c !== value)
                       : [...selectedCategories, value];
 
-                    const next = {
+                    setSearchParams({
                       page: "1",
                       category: updated.join(","),
                       ...(startDate && { startDate }),
-                    };
-
-                    setSearchParams(next);
+                    });
                   }}
                   className="accent-red-500"
                 />
@@ -99,19 +115,27 @@ const WorkoutList = () => {
           <label className="block text-sm font-medium text-text mb-2">
             Start Date (Month):
           </label>
-          <input
-            type="month"
+          <select
             value={startDate}
             onChange={(e) => {
-              const next = {
+              setSearchParams({
                 page: "1",
                 category: selectedCategories.join(","),
                 startDate: e.target.value,
-              };
-              setSearchParams(next);
+              });
             }}
-            className="border rounded px-3 py-1 w-full"
-          />
+            className="border rounded px-3 py-2 w-full"
+          >
+            <option value="">All</option>
+            {months.map((m) => (
+              <option key={m} value={m}>
+                {new Date(m + "-01").toLocaleString("default", {
+                  month: "long",
+                  year: "numeric",
+                })}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
