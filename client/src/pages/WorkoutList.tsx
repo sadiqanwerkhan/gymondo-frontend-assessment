@@ -10,48 +10,56 @@ const WorkoutList = () => {
   const [loading, setLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
   const [showFilters, setShowFilters] = useState(false);
-
-  const currentMonth = new Date();
-  const defaultStartDate = `${currentMonth.getFullYear()}-${String(
-    currentMonth.getMonth() + 1
-  ).padStart(2, "0")}`;
+  const [filteredCount, setFilteredCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
   const page = parseInt(searchParams.get("page") || "1");
   const selectedCategories = (searchParams.get("category") || "")
     .split(",")
     .filter(Boolean);
-  const startDate = searchParams.get("startDate") ?? defaultStartDate;
+  const currentMonth = new Date();
+  const defaultMonth = `${currentMonth.getFullYear()}-${String(
+    currentMonth.getMonth() + 1
+  ).padStart(2, "0")}`;
+  const startDate = searchParams.get("startDate") ?? defaultMonth;
 
   const allCategories = ["c1", "c2", "c3", "c4", "c5", "c6", "c7"];
   const months = getNext12Months();
 
   useEffect(() => {
-    const query = new URLSearchParams(searchParams);
-    const currentPage = parseInt(query.get("page") || "1");
-    const selectedCategories = (query.get("category") || "")
-      .split(",")
-      .filter(Boolean);
-    const selectedStartDate = query.get("startDate") ?? defaultStartDate;
+    const params = new URLSearchParams();
+    params.set("page", page.toString());
 
-    const apiParams = new URLSearchParams();
-    apiParams.set("page", currentPage.toString());
     if (selectedCategories.length > 0) {
-      apiParams.set("category", selectedCategories.join(","));
+      params.set("category", selectedCategories.join(","));
     }
-    if (selectedStartDate !== "all") {
-      apiParams.set("startDate", selectedStartDate);
+
+    if (startDate && startDate !== "all") {
+      params.set("startDate", startDate);
     }
 
     setLoading(true);
     api
-      .get(`/workouts?${apiParams.toString()}`)
+      .get(`/workouts?${params.toString()}`)
       .then((res) => {
         setWorkouts(res.data.workouts);
+        setFilteredCount(res.data.total);
         setTotalPages(Math.ceil(res.data.total / res.data.pageSize));
       })
       .catch((err) => console.error("Failed to fetch workouts:", err))
       .finally(() => setLoading(false));
   }, [searchParams]);
+
+  useEffect(() => {
+    api
+      .get(`/workouts`)
+      .then((res) => setTotalCount(res.data.total))
+      .catch((err) => console.error("Failed to fetch total workouts:", err));
+  }, []);
+
+  const showReset =
+    selectedCategories.length > 0 ||
+    (startDate && startDate !== defaultMonth && startDate !== "all");
 
   const Filters = () => (
     <div className="flex flex-col gap-4">
@@ -82,7 +90,7 @@ const WorkoutList = () => {
                   const next = {
                     page: "1",
                     category: updated.join(","),
-                    ...(startDate !== defaultStartDate && { startDate }),
+                    ...(startDate && startDate !== "all" && { startDate }),
                   };
 
                   setSearchParams(next);
@@ -125,34 +133,33 @@ const WorkoutList = () => {
     </div>
   );
 
-  const shouldShowReset =
-    selectedCategories.length > 0 ||
-    (startDate !== defaultStartDate && startDate !== "all");
+  if (loading) return <p>Loading workouts...</p>;
 
   return (
     <div>
       <h1 className="text-2xl font-bold mb-4">Workout List</h1>
 
-      <div className="md:hidden mb-4 text-right">
+      <div className="md:hidden mb-4 flex justify-end">
         <button
           onClick={() => setShowFilters(!showFilters)}
           className="px-4 py-2 bg-primary text-white rounded"
         >
           {showFilters ? "Hide Filters" : "Show Filters"}
         </button>
-        {showFilters && (
-          <div className="mt-4 p-4 bg-gray-50 border rounded shadow-inner">
-            <Filters />
-          </div>
-        )}
       </div>
 
-      <div className="hidden md:block mb-6 bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+      {showFilters && (
+        <div className="md:hidden mt-4 p-4 bg-gray-50 border rounded shadow-inner">
+          <Filters />
+        </div>
+      )}
+
+      <div className="hidden md:block mb-4 bg-white rounded-xl shadow-sm p-4 border border-gray-100">
         <Filters />
       </div>
 
-      {shouldShowReset && (
-        <div className="mb-4">
+      {showReset && (
+        <div className="mb-2">
           <button
             onClick={() => setSearchParams({ page: "1" })}
             className="inline-block px-4 py-1.5 bg-red-100 text-sm text-red-600 rounded hover:bg-red-200 transition"
@@ -161,6 +168,10 @@ const WorkoutList = () => {
           </button>
         </div>
       )}
+
+      <p className="text-sm text-gray-600 mb-6">
+        Showing {filteredCount} of {totalCount} workouts
+      </p>
 
       {workouts.length === 0 ? (
         <p className="text-gray-500 italic">
@@ -204,7 +215,7 @@ const WorkoutList = () => {
             setSearchParams({
               page: (page - 1).toString(),
               category: selectedCategories.join(","),
-              ...(startDate !== defaultStartDate && { startDate }),
+              ...(startDate && startDate !== "all" && { startDate }),
             })
           }
           disabled={page === 1}
@@ -222,7 +233,7 @@ const WorkoutList = () => {
             setSearchParams({
               page: (page + 1).toString(),
               category: selectedCategories.join(","),
-              ...(startDate !== defaultStartDate && { startDate }),
+              ...(startDate && startDate !== "all" && { startDate }),
             })
           }
           disabled={page === totalPages}
