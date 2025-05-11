@@ -54,12 +54,14 @@ const WorkoutList = () => {
     <div>
       <h1 className="text-2xl font-bold mb-4">Workout List</h1>
 
-      <div className="mb-4 space-y-2">
+      <div className="mb-6 bg-white rounded-xl shadow-sm p-4 border border-gray-100 space-y-4">
         <div>
-          <label className="block font-medium mb-1">Category:</label>
-          <div className="flex gap-2 flex-wrap">
+          <label className="block text-sm font-medium text-text mb-2">
+            Filter by Category:
+          </label>
+          <div className="flex flex-wrap gap-3">
             {allCategories.map((cat) => (
-              <label key={cat} className="text-sm">
+              <label key={cat} className="text-sm flex items-center gap-1">
                 <input
                   type="checkbox"
                   value={cat}
@@ -78,7 +80,6 @@ const WorkoutList = () => {
 
                     setSearchParams(next);
                   }}
-                  className="mr-1"
                 />
                 {cat}
               </label>
@@ -87,7 +88,9 @@ const WorkoutList = () => {
         </div>
 
         <div>
-          <label className="block font-medium mb-1">Start Date (Month):</label>
+          <label className="block text-sm font-medium text-text mb-2">
+            Filter by Start Date (Month):
+          </label>
           <input
             type="month"
             value={startDate}
@@ -99,14 +102,14 @@ const WorkoutList = () => {
               };
               setSearchParams(next);
             }}
-            className="border px-2 py-1 rounded"
+            className="border rounded px-3 py-1"
           />
         </div>
 
         {(selectedCategories.length > 0 || startDate) && (
           <button
             onClick={() => setSearchParams({ page: "1" })}
-            className="text-sm text-red-500 underline mb-4 block"
+            className="text-sm text-red-500 underline"
           >
             Reset Filters
           </button>
@@ -118,23 +121,34 @@ const WorkoutList = () => {
           No workouts found for these filters.
         </p>
       ) : (
-        <ul className="space-y-4">
+        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {workouts.map((workout) => (
-            <li key={workout.id} className="border p-4 rounded shadow">
-              <h2 className="font-semibold">{workout.name}</h2>
-              <p>{workout.description.substring(0, 100)}...</p>
-              <p className="text-sm text-gray-500">
-                Category: {workout.category}
-              </p>
-              <p className="text-sm text-gray-500">
-                Start Date: {new Date(workout.startDate).toLocaleDateString()}
-              </p>
-              <Link
-                to={`/workout/${workout.id}`}
-                className="text-blue-500 underline block mt-2"
-              >
-                View Details →
-              </Link>
+            <li
+              key={workout.id}
+              className="bg-white rounded-xl shadow-md p-5 border border-gray-100 hover:shadow-lg transition"
+            >
+              <div className="flex flex-col gap-2">
+                <h2 className="text-lg font-bold text-primary">
+                  {workout.name}
+                </h2>
+                <p className="text-sm text-gray-700">
+                  {workout.description.substring(0, 100)}...
+                </p>
+                <div className="text-xs text-gray-500">
+                  <span className="inline-block mr-3">
+                    🏷 Category: {workout.category}
+                  </span>
+                  <span>
+                    📅 {new Date(workout.startDate).toLocaleDateString()}
+                  </span>
+                </div>
+                <Link
+                  to={`/workout/${workout.id}`}
+                  className="text-sm text-blue-500 underline hover:text-blue-700"
+                >
+                  View Details →
+                </Link>
+              </div>
             </li>
           ))}
         </ul>
