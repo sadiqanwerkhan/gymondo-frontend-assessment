@@ -61,7 +61,14 @@ const WorkoutList = () => {
           </label>
           <div className="flex flex-wrap gap-3">
             {allCategories.map((cat) => (
-              <label key={cat} className="text-sm flex items-center gap-1">
+              <label
+                key={cat}
+                className={`text-sm flex items-center gap-2 px-2 py-1 rounded border cursor-pointer transition ${
+                  selectedCategories.includes(cat)
+                    ? "bg-red-50 border-red-500 text-red-600 font-medium"
+                    : "bg-white border-gray-300 text-gray-700"
+                }`}
+              >
                 <input
                   type="checkbox"
                   value={cat}
@@ -80,6 +87,7 @@ const WorkoutList = () => {
 
                     setSearchParams(next);
                   }}
+                  className="accent-red-500"
                 />
                 {cat}
               </label>
@@ -108,12 +116,14 @@ const WorkoutList = () => {
       </div>
 
       {(selectedCategories.length > 0 || startDate) && (
-        <button
-          onClick={() => setSearchParams({ page: "1" })}
-          className="text-sm text-red-500 underline mb-4 block"
-        >
-          Reset Filters
-        </button>
+        <div className="mb-4">
+          <button
+            onClick={() => setSearchParams({ page: "1" })}
+            className="inline-block px-4 py-1.5 bg-red-100 text-sm text-red-600 rounded hover:bg-red-200 transition"
+          >
+            Reset Filters
+          </button>
+        </div>
       )}
 
       {workouts.length === 0 ? (
