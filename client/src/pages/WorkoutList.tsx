@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../api/axios";
 import { Link, useSearchParams } from "react-router-dom";
 import type { Workout } from "../types/workout";
@@ -9,137 +9,149 @@ const WorkoutList = () => {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [showFilters, setShowFilters] = useState(false);
+
+  const currentMonth = new Date();
+  const defaultStartDate = `${currentMonth.getFullYear()}-${String(
+    currentMonth.getMonth() + 1
+  ).padStart(2, "0")}`;
 
   const page = parseInt(searchParams.get("page") || "1");
   const selectedCategories = (searchParams.get("category") || "")
     .split(",")
     .filter(Boolean);
-  const startDate = searchParams.get("startDate") || "";
+  const startDate = searchParams.get("startDate") ?? defaultStartDate;
 
   const allCategories = ["c1", "c2", "c3", "c4", "c5", "c6", "c7"];
   const months = getNext12Months();
 
-  const initialized = useRef(false);
   useEffect(() => {
-    if (!startDate && !initialized.current) {
-      const now = new Date();
-      const defaultMonth = `${now.getFullYear()}-${String(
-        now.getMonth() + 1
-      ).padStart(2, "0")}`;
-      setSearchParams({
-        page: "1",
-        category: selectedCategories.join(","),
-        startDate: defaultMonth,
-      });
-      initialized.current = true;
-    }
-  }, [startDate, selectedCategories, setSearchParams]);
-
-  useEffect(() => {
-    setLoading(true);
-
     const query = new URLSearchParams(searchParams);
-    const page = parseInt(query.get("page") || "1");
+    const currentPage = parseInt(query.get("page") || "1");
     const selectedCategories = (query.get("category") || "")
       .split(",")
       .filter(Boolean);
-    const startDate = query.get("startDate") || "";
+    const selectedStartDate = query.get("startDate") ?? defaultStartDate;
 
     const apiParams = new URLSearchParams();
-    apiParams.set("page", page.toString());
+    apiParams.set("page", currentPage.toString());
     if (selectedCategories.length > 0) {
       apiParams.set("category", selectedCategories.join(","));
     }
-    if (startDate) {
-      apiParams.set("startDate", startDate);
+    if (selectedStartDate !== "all") {
+      apiParams.set("startDate", selectedStartDate);
     }
 
+    setLoading(true);
     api
       .get(`/workouts?${apiParams.toString()}`)
       .then((res) => {
         setWorkouts(res.data.workouts);
         setTotalPages(Math.ceil(res.data.total / res.data.pageSize));
       })
-      .catch((err) => {
-        console.error("Failed to fetch workouts:", err);
-      })
+      .catch((err) => console.error("Failed to fetch workouts:", err))
       .finally(() => setLoading(false));
   }, [searchParams]);
 
-  if (loading) return <p>Loading workouts...</p>;
+  const Filters = () => (
+    <div className="flex flex-col gap-4">
+      <div>
+        <label className="block text-sm font-medium text-text mb-2">
+          Filter by Category:
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {allCategories.map((cat) => (
+            <label
+              key={cat}
+              className={`text-sm flex items-center gap-2 px-2 py-1 rounded border cursor-pointer transition ${
+                selectedCategories.includes(cat)
+                  ? "bg-red-50 border-red-500 text-red-600 font-medium"
+                  : "bg-white border-gray-300 text-gray-700"
+              }`}
+            >
+              <input
+                type="checkbox"
+                value={cat}
+                checked={selectedCategories.includes(cat)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const updated = selectedCategories.includes(value)
+                    ? selectedCategories.filter((c) => c !== value)
+                    : [...selectedCategories, value];
+
+                  const next = {
+                    page: "1",
+                    category: updated.join(","),
+                    ...(startDate !== defaultStartDate && { startDate }),
+                  };
+
+                  setSearchParams(next);
+                }}
+                className="accent-red-500"
+              />
+              {cat}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-text mb-2">
+          Start Date (Month):
+        </label>
+        <select
+          value={startDate}
+          onChange={(e) => {
+            const next = {
+              page: "1",
+              category: selectedCategories.join(","),
+              startDate: e.target.value,
+            };
+            setSearchParams(next);
+          }}
+          className="border rounded px-3 py-2 w-full"
+        >
+          <option value="all">All</option>
+          {months.map((m) => (
+            <option key={m} value={m}>
+              {new Date(m + "-01").toLocaleString("default", {
+                month: "long",
+                year: "numeric",
+              })}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+
+  const shouldShowReset =
+    selectedCategories.length > 0 ||
+    (startDate !== defaultStartDate && startDate !== "all");
 
   return (
     <div>
       <h1 className="text-2xl font-bold mb-4">Workout List</h1>
 
-      <div className="mb-6 bg-white rounded-xl shadow-sm p-4 border border-gray-100 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div className="md:flex-1">
-          <label className="block text-sm font-medium text-text mb-2">
-            Filter by Category:
-          </label>
-          <div className="flex flex-wrap gap-3">
-            {allCategories.map((cat) => (
-              <label
-                key={cat}
-                className={`text-sm flex items-center gap-2 px-2 py-1 rounded border cursor-pointer transition ${
-                  selectedCategories.includes(cat)
-                    ? "bg-red-50 border-red-500 text-red-600 font-medium"
-                    : "bg-white border-gray-300 text-gray-700"
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  value={cat}
-                  checked={selectedCategories.includes(cat)}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    const updated = selectedCategories.includes(value)
-                      ? selectedCategories.filter((c) => c !== value)
-                      : [...selectedCategories, value];
-
-                    setSearchParams({
-                      page: "1",
-                      category: updated.join(","),
-                      ...(startDate && { startDate }),
-                    });
-                  }}
-                  className="accent-red-500"
-                />
-                {cat}
-              </label>
-            ))}
+      <div className="md:hidden mb-4 text-right">
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="px-4 py-2 bg-primary text-white rounded"
+        >
+          {showFilters ? "Hide Filters" : "Show Filters"}
+        </button>
+        {showFilters && (
+          <div className="mt-4 p-4 bg-gray-50 border rounded shadow-inner">
+            <Filters />
           </div>
-        </div>
-
-        <div className="md:w-64">
-          <label className="block text-sm font-medium text-text mb-2">
-            Start Date (Month):
-          </label>
-          <select
-            value={startDate}
-            onChange={(e) => {
-              setSearchParams({
-                page: "1",
-                category: selectedCategories.join(","),
-                startDate: e.target.value,
-              });
-            }}
-            className="border rounded px-3 py-2 w-full"
-          >
-            <option value="">All</option>
-            {months.map((m) => (
-              <option key={m} value={m}>
-                {new Date(m + "-01").toLocaleString("default", {
-                  month: "long",
-                  year: "numeric",
-                })}
-              </option>
-            ))}
-          </select>
-        </div>
+        )}
       </div>
 
-      {(selectedCategories.length > 0 || startDate) && (
+      <div className="hidden md:block mb-6 bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+        <Filters />
+      </div>
+
+      {shouldShowReset && (
         <div className="mb-4">
           <button
             onClick={() => setSearchParams({ page: "1" })}
@@ -192,7 +204,7 @@ const WorkoutList = () => {
             setSearchParams({
               page: (page - 1).toString(),
               category: selectedCategories.join(","),
-              ...(startDate && { startDate }),
+              ...(startDate !== defaultStartDate && { startDate }),
             })
           }
           disabled={page === 1}
@@ -210,7 +222,7 @@ const WorkoutList = () => {
             setSearchParams({
               page: (page + 1).toString(),
               category: selectedCategories.join(","),
-              ...(startDate && { startDate }),
+              ...(startDate !== defaultStartDate && { startDate }),
             })
           }
           disabled={page === totalPages}
