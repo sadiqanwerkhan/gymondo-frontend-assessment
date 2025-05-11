@@ -27,7 +27,10 @@ const WorkoutDetail = () => {
       <p className="text-sm text-gray-500">
         Start Date: {new Date(workout.startDate).toLocaleDateString()}
       </p>
-      <Link to="/" className="text-blue-500 underline">
+      <Link
+        to="/"
+        className="inline-block mb-4 px-4 py-1.5 text-sm text-white bg-primary rounded hover:bg-red-600 transition"
+      >
         ← Back to Workout List
       </Link>
     </div>

@@ -54,8 +54,8 @@ const WorkoutList = () => {
     <div>
       <h1 className="text-2xl font-bold mb-4">Workout List</h1>
 
-      <div className="mb-6 bg-white rounded-xl shadow-sm p-4 border border-gray-100 space-y-4">
-        <div>
+      <div className="mb-6 bg-white rounded-xl shadow-sm p-4 border border-gray-100 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="md:flex-1">
           <label className="block text-sm font-medium text-text mb-2">
             Filter by Category:
           </label>
@@ -87,9 +87,9 @@ const WorkoutList = () => {
           </div>
         </div>
 
-        <div>
+        <div className="md:w-64">
           <label className="block text-sm font-medium text-text mb-2">
-            Filter by Start Date (Month):
+            Start Date (Month):
           </label>
           <input
             type="month"
@@ -102,19 +102,19 @@ const WorkoutList = () => {
               };
               setSearchParams(next);
             }}
-            className="border rounded px-3 py-1"
+            className="border rounded px-3 py-1 w-full"
           />
         </div>
-
-        {(selectedCategories.length > 0 || startDate) && (
-          <button
-            onClick={() => setSearchParams({ page: "1" })}
-            className="text-sm text-red-500 underline"
-          >
-            Reset Filters
-          </button>
-        )}
       </div>
+
+      {(selectedCategories.length > 0 || startDate) && (
+        <button
+          onClick={() => setSearchParams({ page: "1" })}
+          className="text-sm text-red-500 underline mb-4 block"
+        >
+          Reset Filters
+        </button>
+      )}
 
       {workouts.length === 0 ? (
         <p className="text-gray-500 italic">
@@ -134,17 +134,15 @@ const WorkoutList = () => {
                 <p className="text-sm text-gray-700">
                   {workout.description.substring(0, 100)}...
                 </p>
-                <div className="text-xs text-gray-500">
-                  <span className="inline-block mr-3">
-                    🏷 Category: {workout.category}
-                  </span>
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>🏷 Category: {workout.category}</span>
                   <span>
                     📅 {new Date(workout.startDate).toLocaleDateString()}
                   </span>
                 </div>
                 <Link
                   to={`/workout/${workout.id}`}
-                  className="text-sm text-blue-500 underline hover:text-blue-700"
+                  className="self-start mt-2 px-4 py-1.5 text-sm text-white bg-primary rounded hover:bg-red-600 transition"
                 >
                   View Details →
                 </Link>
@@ -154,7 +152,7 @@ const WorkoutList = () => {
         </ul>
       )}
 
-      <div className="flex justify-between mt-6">
+      <div className="flex items-center justify-between mt-8">
         <button
           onClick={() =>
             setSearchParams({
@@ -164,12 +162,12 @@ const WorkoutList = () => {
             })
           }
           disabled={page === 1}
-          className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+          className="px-4 py-2 bg-primary text-white rounded disabled:opacity-50 hover:bg-red-600 transition"
         >
           ← Prev
         </button>
 
-        <span className="self-center">
+        <span className="text-sm text-text font-medium">
           Page {page} of {totalPages}
         </span>
 
@@ -182,7 +180,7 @@ const WorkoutList = () => {
             })
           }
           disabled={page === totalPages}
-          className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+          className="px-4 py-2 bg-primary text-white rounded disabled:opacity-50 hover:bg-red-600 transition"
         >
           Next →
         </button>
