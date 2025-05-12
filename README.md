@@ -65,4 +65,9 @@ This project is a fully functional **workout browser web application** built usi
 - Infinite scroll for workouts.
 - Unit tests for filters and pagination logic.
 - Deployment (Vercel/Netlify).
+- When the codebase grows, the typescript interfaces should be in differernt files
+- When the application grows, the caching techniques should be used using React.memo, useMemo() hook, useRef() hook.
+
+Looking forward for the feedback and further discussions.
+Thank you!
 
