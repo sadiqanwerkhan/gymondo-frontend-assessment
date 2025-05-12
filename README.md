@@ -32,33 +32,33 @@ This project is a fully functional **workout browser web application** built usi
 
 ### 1. Clone the repository:
 
-bash
-git clone https://github.com/sadiqanwerkhan/gymondo-frontend-assessment.git
-cd gymondo-frontend-assessment
+- bash
+- git clone https://github.com/sadiqanwerkhan/gymondo-frontend-assessment.git
+- cd gymondo-frontend-assessment
 
 ## Install dependencies
 
-# For frontend
-cd client
-npm install
+# For Frontend
+- cd client
+- npm install
 
 ## To populate the data
-cd gymondo-frontend-assessment/server
-npx ts-node src/scripts/seed.ts
+- cd gymondo-frontend-assessment/server
+- npx ts-node src/scripts/seed.ts
 
 ## To run the project
 # Frontend: 
-cd client
-npm run dev
+- cd client
+- npm run dev
 
 # Backend
-cd server
-npm install
-npm run dev
+- cd server
+- npm install
+- npm run dev
 
-# For Testing
-cd client
-npx vitest run
+## For Testing
+- cd client
+- npx vitest run
 
 ## Possible Improvements
 - Move filter state to Context or Redux.
