@@ -56,7 +56,7 @@ cd server
 npm install
 npm run dev
 
-# For testing
+# For Testing
 cd client
 npx vitest run
 
