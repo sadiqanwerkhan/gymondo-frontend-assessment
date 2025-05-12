@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import type { Workout } from "../types/workout";
 import { getNext12Months } from "../utils/date";
+
+import WorkoutGrid from "../components/WorkoutGrid";
+import FiltersPanel from "../components/FilterPanel";
+import ResetFiltersButton from "../components/ResetFilterButton";
+import Pagination from "../components/Pagination";
 
 const WorkoutList = () => {
   const [totalPages, setTotalPages] = useState(1);
@@ -59,79 +64,17 @@ const WorkoutList = () => {
 
   const showReset =
     selectedCategories.length > 0 ||
-    (startDate && startDate !== defaultMonth && startDate !== "all");
+    (typeof startDate === "string" &&
+      startDate !== defaultMonth &&
+      startDate !== "all");
 
-  const Filters = () => (
-    <div className="flex flex-col gap-4">
-      <div>
-        <label className="block text-sm font-medium text-text mb-2">
-          Filter by Category:
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {allCategories.map((cat) => (
-            <label
-              key={cat}
-              className={`text-sm flex items-center gap-2 px-2 py-1 rounded border cursor-pointer transition ${
-                selectedCategories.includes(cat)
-                  ? "bg-red-50 border-red-500 text-red-600 font-medium"
-                  : "bg-white border-gray-300 text-gray-700"
-              }`}
-            >
-              <input
-                type="checkbox"
-                value={cat}
-                checked={selectedCategories.includes(cat)}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  const updated = selectedCategories.includes(value)
-                    ? selectedCategories.filter((c) => c !== value)
-                    : [...selectedCategories, value];
-
-                  const next = {
-                    page: "1",
-                    category: updated.join(","),
-                    ...(startDate && startDate !== "all" && { startDate }),
-                  };
-
-                  setSearchParams(next);
-                }}
-                className="accent-red-500"
-              />
-              {cat}
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-text mb-2">
-          Start Date (Month):
-        </label>
-        <select
-          value={startDate}
-          onChange={(e) => {
-            const next = {
-              page: "1",
-              category: selectedCategories.join(","),
-              startDate: e.target.value,
-            };
-            setSearchParams(next);
-          }}
-          className="border rounded px-3 py-2 w-full"
-        >
-          <option value="all">All</option>
-          {months.map((m) => (
-            <option key={m} value={m}>
-              {new Date(m + "-01").toLocaleString("default", {
-                month: "long",
-                year: "numeric",
-              })}
-            </option>
-          ))}
-        </select>
-      </div>
-    </div>
-  );
+  const handlePageChange = (newPage: number) => {
+    setSearchParams({
+      page: newPage.toString(),
+      category: selectedCategories.join(","),
+      ...(startDate && startDate !== "all" && { startDate }),
+    });
+  };
 
   if (loading) return <p>Loading workouts...</p>;
 
@@ -150,98 +93,44 @@ const WorkoutList = () => {
 
       {showFilters && (
         <div className="md:hidden mt-4 p-4 bg-gray-50 border rounded shadow-inner">
-          <Filters />
+          <FiltersPanel
+            selectedCategories={selectedCategories}
+            startDate={startDate}
+            setSearchParams={setSearchParams}
+            allCategories={allCategories}
+            months={months}
+          />
         </div>
       )}
 
       <div className="hidden md:block mb-4 bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-        <Filters />
+        <FiltersPanel
+          selectedCategories={selectedCategories}
+          startDate={startDate}
+          setSearchParams={setSearchParams}
+          allCategories={allCategories}
+          months={months}
+        />
       </div>
 
-      {showReset && (
-        <div className="mb-2">
-          <button
-            onClick={() => setSearchParams({ page: "1" })}
-            className="inline-block px-4 py-1.5 bg-red-100 text-sm text-red-600 rounded hover:bg-red-200 transition"
-          >
-            Reset Filters
-          </button>
-        </div>
-      )}
+      <ResetFiltersButton
+        showReset={showReset}
+        onReset={() => setSearchParams({ page: "1" })}
+      />
 
       <p className="text-sm text-gray-600 mb-6">
         Showing {filteredCount} of {totalCount} workouts
       </p>
 
-      {workouts.length === 0 ? (
-        <p className="text-gray-500 italic">
-          No workouts found for these filters.
-        </p>
-      ) : (
-        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {workouts.map((workout) => (
-            <li
-              key={workout.id}
-              className="bg-white rounded-xl shadow-md p-5 border border-gray-100 hover:shadow-lg transition"
-            >
-              <div className="flex flex-col gap-2">
-                <h2 className="text-lg font-bold text-primary">
-                  {workout.name}
-                </h2>
-                <p className="text-sm text-gray-700">
-                  {workout.description.substring(0, 100)}...
-                </p>
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span>🏷 Category: {workout.category}</span>
-                  <span>
-                    📅 {new Date(workout.startDate).toLocaleDateString()}
-                  </span>
-                </div>
-                <Link
-                  to={`/workout/${workout.id}`}
-                  className="self-start mt-2 px-4 py-1.5 text-sm text-white bg-primary rounded hover:bg-red-600 transition"
-                >
-                  View Details →
-                </Link>
-              </div>
-            </li>
-          ))}
-        </ul>
+      <WorkoutGrid workouts={workouts} />
+
+      {totalPages > 1 && filteredCount >= 20 && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
       )}
-
-      <div className="flex items-center justify-between mt-8">
-        <button
-          onClick={() =>
-            setSearchParams({
-              page: (page - 1).toString(),
-              category: selectedCategories.join(","),
-              ...(startDate && startDate !== "all" && { startDate }),
-            })
-          }
-          disabled={page === 1}
-          className="px-4 py-2 bg-primary text-white rounded disabled:opacity-50 hover:bg-red-600 transition"
-        >
-          ← Prev
-        </button>
-
-        <span className="text-sm text-text font-medium">
-          Page {page} of {totalPages}
-        </span>
-
-        <button
-          onClick={() =>
-            setSearchParams({
-              page: (page + 1).toString(),
-              category: selectedCategories.join(","),
-              ...(startDate && startDate !== "all" && { startDate }),
-            })
-          }
-          disabled={page === totalPages}
-          className="px-4 py-2 bg-primary text-white rounded disabled:opacity-50 hover:bg-red-600 transition"
-        >
-          Next →
-        </button>
-      </div>
     </div>
   );
 };
