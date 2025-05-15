@@ -7,11 +7,15 @@ on:
     branches: [main]
 
 jobs:
-  frontend:
+  frontend-ci:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: client
+
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v3
 
       - name: Setup Node.js
@@ -19,23 +23,19 @@ jobs:
         with:
           node-version: 18
           cache: "npm"
+          cache-dependency-path: client/package-lock.json
 
       - name: Install dependencies
         run: npm install
-        working-directory: ./client
 
       - name: Type check
-        run: npx tsc --noEmit
-        working-directory: ./client
+        run: npm run type-check
 
       - name: Lint
         run: npm run lint
-        working-directory: ./client
 
       - name: Run tests
         run: npm run test
-        working-directory: ./client
 
-      - name: Build
+      - name: Build project
         run: npm run build
-        working-directory: ./client
